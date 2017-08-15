@@ -133,6 +133,7 @@ type S3Store struct {
 type S3API interface {
 	PutObject(input *s3.PutObjectInput) (*s3.PutObjectOutput, error)
 	ListParts(input *s3.ListPartsInput) (*s3.ListPartsOutput, error)
+	ListPartsPages(input *s3.ListPartsInput, fn func(*s3.ListPartsOutput, bool) bool) (error)
 	UploadPart(input *s3.UploadPartInput) (*s3.UploadPartOutput, error)
 	GetObject(input *s3.GetObjectInput) (*s3.GetObjectOutput, error)
 	CreateMultipartUpload(input *s3.CreateMultipartUploadInput) (*s3.CreateMultipartUploadOutput, error)
@@ -504,27 +505,23 @@ func (store S3Store) ConcatUploads(dest string, partialUploads []string) error {
 func (store S3Store)ListParts(id string) (parts []*s3.Part, err error) {
     uploadId, multipartId := splitIds(id)
 
-    partMarker := int64(0)
-    for {
-        // Get uploaded parts
-        listPtr, err := store.Service.ListParts(&s3.ListPartsInput{
-            Bucket:           aws.String(store.Bucket),
-            Key:              aws.String(uploadId),
-            UploadId:         aws.String(multipartId),
-            PartNumberMarker: aws.Int64(partMarker),
-        })
-        if err != nil {
-            return nil, err
-        }
-
-        parts = append(parts, (*listPtr).Parts...)
-
-        if listPtr.IsTruncated != nil && *listPtr.IsTruncated {
-            partMarker = *listPtr.NextPartNumberMarker
-        } else {
-            break
-        }
-    }
+		pageNum := 0
+		partMarker := int64(0)
+		err = store.Service.ListPartsPages(&s3.ListPartsInput{
+				Bucket:           aws.String(store.Bucket),
+				Key:              aws.String(uploadId),
+				UploadId:         aws.String(multipartId),
+			}, 
+			func(page *s3.ListPartsOutput, lastPage bool) bool {
+				parts = append(parts, page.Parts...)
+		    pageNum++
+				partMarker = *page.NextPartNumberMarker
+		    fmt.Println(page)
+		    return lastPage
+		  })
+		if err != nil {
+			return nil, err
+		}
     return parts, nil
 }
 
