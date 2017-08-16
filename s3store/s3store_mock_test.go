@@ -91,8 +91,21 @@ func (_m *MockS3API) ListParts(_param0 *s3.ListPartsInput) (*s3.ListPartsOutput,
 	return ret0, ret1
 }
 
+// ListParts indicates an expected call of ListParts
 func (_mr *_MockS3APIRecorder) ListParts(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "ListParts", arg0)
+}
+
+// ListPartsPages mocks base method
+func (_m *MockS3API) ListPartsPages(_param0 *s3.ListPartsInput, _param1 func(*s3.ListPartsOutput, bool) bool) error {
+	ret := _m.ctrl.Call(_m, "ListPartsPages", _param0, _param1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ListPartsPages indicates an expected call of ListPartsPages
+func (_mr *_MockS3APIRecorder) ListPartsPages(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "ListPartsPages", arg0, arg1)
 }
 
 func (_m *MockS3API) PutObject(_param0 *s3.PutObjectInput) (*s3.PutObjectOutput, error) {
